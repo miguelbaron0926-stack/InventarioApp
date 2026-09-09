@@ -1,0 +1,207 @@
+!SESSION 2026-08-28 11:37:32.082 -----------------------------------------------
+eclipse.buildId=4.37.0.20250905-1455
+java.version=22
+java.vendor=Oracle Corporation
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=es_CO
+Framework arguments:  -product org.eclipse.epp.package.java.product
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 -product org.eclipse.epp.package.java.product -data D:\ARCHIVOS UNIVERSIDAD\PROYECTOS ECLIPSE\InventarioApp
+
+!ENTRY ch.qos.logback.classic 1 0 2026-08-28 11:37:34.591
+!MESSAGE Activated before the state location was initialized. Retry after the state location is initialized.
+
+!ENTRY ch.qos.logback.classic 1 0 2026-08-28 11:37:36.722
+!MESSAGE Logback config file: D:\ARCHIVOS UNIVERSIDAD\PROYECTOS ECLIPSE\InventarioApp\.metadata\.plugins\org.eclipse.m2e.logback\logback.2.7.100.20250418-1315.xml
+
+!ENTRY org.eclipse.egit.ui 2 0 2026-08-28 11:37:45.751
+!MESSAGE Warning: The environment variable HOME is not set. The following directory will be used to store the Git
+user global configuration and to define the default location to store repositories: 'C:\Users\black'. If this is
+not correct please set the HOME environment variable and restart Eclipse. Otherwise Git for Windows and
+EGit might behave differently since they see different configuration options.
+This warning can be switched off on the Team > Git > Confirmations and Warnings preference page.
+
+!ENTRY org.eclipse.ui 4 0 2026-08-28 11:45:11.686
+!MESSAGE Unhandled event loop exception
+!STACK 0
+org.eclipse.swt.SWTException: Widget is disposed
+	at org.eclipse.swt.SWT.error(SWT.java:4946)
+	at org.eclipse.swt.SWT.error(SWT.java:4861)
+	at org.eclipse.swt.SWT.error(SWT.java:4832)
+	at org.eclipse.swt.widgets.Widget.error(Widget.java:507)
+	at org.eclipse.swt.widgets.Widget.checkWidget(Widget.java:426)
+	at org.eclipse.swt.widgets.Menu.indexOf(Menu.java:832)
+	at org.eclipse.swt.widgets.Menu.wmTimer(Menu.java:1352)
+	at org.eclipse.swt.widgets.Control.WM_TIMER(Control.java:5721)
+	at org.eclipse.swt.widgets.Control.windowProc(Control.java:4869)
+	at org.eclipse.swt.widgets.Canvas.windowProc(Canvas.java:336)
+	at org.eclipse.swt.widgets.Decorations.windowProc(Decorations.java:1494)
+	at org.eclipse.swt.widgets.Shell.windowProc(Shell.java:2378)
+	at org.eclipse.swt.widgets.Display.windowProc(Display.java:5130)
+	at org.eclipse.swt.internal.win32.OS.DefWindowProc(Native Method)
+	at org.eclipse.swt.widgets.Shell.callWindowProc(Shell.java:504)
+	at org.eclipse.swt.widgets.Control.windowProc(Control.java:4887)
+	at org.eclipse.swt.widgets.Canvas.windowProc(Canvas.java:336)
+	at org.eclipse.swt.widgets.Decorations.windowProc(Decorations.java:1494)
+	at org.eclipse.swt.widgets.Shell.windowProc(Shell.java:2378)
+	at org.eclipse.swt.widgets.Display.windowProc(Display.java:5130)
+	at org.eclipse.swt.internal.win32.OS.DefWindowProc(Native Method)
+	at org.eclipse.swt.widgets.Shell.callWindowProc(Shell.java:504)
+	at org.eclipse.swt.widgets.Control.windowProc(Control.java:4887)
+	at org.eclipse.swt.widgets.Canvas.windowProc(Canvas.java:336)
+	at org.eclipse.swt.widgets.Decorations.windowProc(Decorations.java:1494)
+	at org.eclipse.swt.widgets.Shell.windowProc(Shell.java:2378)
+	at org.eclipse.swt.widgets.Display.windowProc(Display.java:5130)
+	at org.eclipse.swt.internal.win32.OS.DispatchMessage(Native Method)
+	at org.eclipse.swt.widgets.Display.readAndDispatch(Display.java:3746)
+	at org.eclipse.e4.ui.internal.workbench.swt.PartRenderingEngine$5.run(PartRenderingEngine.java:1151)
+	at org.eclipse.core.databinding.observable.Realm.runWithDefault(Realm.java:339)
+	at org.eclipse.e4.ui.internal.workbench.swt.PartRenderingEngine.run(PartRenderingEngine.java:1042)
+	at org.eclipse.e4.ui.internal.workbench.E4Workbench.createAndRunUI(E4Workbench.java:153)
+	at org.eclipse.ui.internal.Workbench.lambda$3(Workbench.java:678)
+	at org.eclipse.core.databinding.observable.Realm.runWithDefault(Realm.java:339)
+	at org.eclipse.ui.internal.Workbench.createAndRunWorkbench(Workbench.java:583)
+	at org.eclipse.ui.PlatformUI.createAndRunWorkbench(PlatformUI.java:173)
+	at org.eclipse.ui.internal.ide.application.IDEApplication.start(IDEApplication.java:185)
+	at org.eclipse.equinox.internal.app.EclipseAppHandle.run(EclipseAppHandle.java:219)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.runApplication(EclipseAppLauncher.java:149)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.start(EclipseAppLauncher.java:115)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(EclipseStarter.java:467)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(EclipseStarter.java:298)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.eclipse.equinox.launcher.Main.invokeFramework(Main.java:627)
+	at org.eclipse.equinox.launcher.Main.basicRun(Main.java:575)
+	at org.eclipse.equinox.launcher.Main.run(Main.java:1431)
+!SESSION 2026-08-28 11:52:19.268 -----------------------------------------------
+eclipse.buildId=4.37.0.20250905-1455
+java.version=22
+java.vendor=Oracle Corporation
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=es_CO
+Framework arguments:  -product org.eclipse.epp.package.java.product
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 -product org.eclipse.epp.package.java.product -data D:\ARCHIVOS UNIVERSIDAD\PROYECTOS ECLIPSE\InventarioApp
+
+!ENTRY ch.qos.logback.classic 1 0 2026-08-28 11:52:21.383
+!MESSAGE Activated before the state location was initialized. Retry after the state location is initialized.
+
+!ENTRY ch.qos.logback.classic 1 0 2026-08-28 11:52:23.055
+!MESSAGE Logback config file: D:\ARCHIVOS UNIVERSIDAD\PROYECTOS ECLIPSE\InventarioApp\.metadata\.plugins\org.eclipse.m2e.logback\logback.2.7.100.20250418-1315.xml
+
+!ENTRY org.eclipse.egit.ui 2 0 2026-08-28 11:52:28.404
+!MESSAGE Warning: The environment variable HOME is not set. The following directory will be used to store the Git
+user global configuration and to define the default location to store repositories: 'C:\Users\black'. If this is
+not correct please set the HOME environment variable and restart Eclipse. Otherwise Git for Windows and
+EGit might behave differently since they see different configuration options.
+This warning can be switched off on the Team > Git > Confirmations and Warnings preference page.
+!SESSION 2026-08-28 13:19:35.161 -----------------------------------------------
+eclipse.buildId=4.37.0.20250905-1455
+java.version=22
+java.vendor=Oracle Corporation
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=es_CO
+Framework arguments:  -product org.eclipse.epp.package.java.product
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 -product org.eclipse.epp.package.java.product -data D:\ARCHIVOS UNIVERSIDAD\COPIA PROYECTO JAVA INVENTARIO APP\InventarioApp
+
+!ENTRY ch.qos.logback.classic 1 0 2026-08-28 13:19:37.485
+!MESSAGE Activated before the state location was initialized. Retry after the state location is initialized.
+
+!ENTRY ch.qos.logback.classic 1 0 2026-08-28 13:19:39.608
+!MESSAGE Logback config file: D:\ARCHIVOS UNIVERSIDAD\COPIA PROYECTO JAVA INVENTARIO APP\InventarioApp\.metadata\.plugins\org.eclipse.m2e.logback\logback.2.7.100.20250418-1315.xml
+
+!ENTRY org.eclipse.egit.ui 2 0 2026-08-28 13:19:46.410
+!MESSAGE Warning: The environment variable HOME is not set. The following directory will be used to store the Git
+user global configuration and to define the default location to store repositories: 'C:\Users\black'. If this is
+not correct please set the HOME environment variable and restart Eclipse. Otherwise Git for Windows and
+EGit might behave differently since they see different configuration options.
+This warning can be switched off on the Team > Git > Confirmations and Warnings preference page.
+!SESSION 2026-09-01 01:17:37.127 -----------------------------------------------
+eclipse.buildId=4.37.0.20250905-1455
+java.version=22
+java.vendor=Oracle Corporation
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=es_CO
+Framework arguments:  -product org.eclipse.epp.package.java.product
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 -product org.eclipse.epp.package.java.product -data D:\ARCHIVOS UNIVERSIDAD\COPIA PROYECTO JAVA INVENTARIO APP\InventarioApp
+
+!ENTRY ch.qos.logback.classic 1 0 2026-09-01 01:18:11.142
+!MESSAGE Activated before the state location was initialized. Retry after the state location is initialized.
+
+!ENTRY ch.qos.logback.classic 1 0 2026-09-01 01:18:14.553
+!MESSAGE Logback config file: D:\ARCHIVOS UNIVERSIDAD\COPIA PROYECTO JAVA INVENTARIO APP\InventarioApp\.metadata\.plugins\org.eclipse.m2e.logback\logback.2.7.100.20250418-1315.xml
+
+!ENTRY org.eclipse.egit.ui 2 0 2026-09-01 01:18:23.794
+!MESSAGE Warning: The environment variable HOME is not set. The following directory will be used to store the Git
+user global configuration and to define the default location to store repositories: 'C:\Users\black'. If this is
+not correct please set the HOME environment variable and restart Eclipse. Otherwise Git for Windows and
+EGit might behave differently since they see different configuration options.
+This warning can be switched off on the Team > Git > Confirmations and Warnings preference page.
+
+!ENTRY org.eclipse.ui.ide 4 0 2026-09-01 01:18:40.908
+!MESSAGE Could not import project located at D:\ARCHIVOS UNIVERSIDAD\COPIA PROYECTO JAVA INVENTARIO APP\InventarioApp
+!STACK 0
+org.eclipse.ui.internal.wizards.datatransfer.CouldNotImportProjectException: Could not import project located at D:\ARCHIVOS UNIVERSIDAD\COPIA PROYECTO JAVA INVENTARIO APP\InventarioApp
+	at org.eclipse.ui.internal.wizards.datatransfer.SmartImportJob.toExistingOrNewProject(SmartImportJob.java:555)
+	at org.eclipse.ui.internal.wizards.datatransfer.SmartImportJob.run(SmartImportJob.java:246)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:63)
+Caused by: org.eclipse.core.internal.resources.ResourceException: Invalid project description for project 'InventarioApp' at 'file:/D:/ARCHIVOS%20UNIVERSIDAD/COPIA%20PROYECTO%20JAVA%20INVENTARIO%20APP/InventarioApp' 
+	at org.eclipse.core.internal.resources.Project.checkDescription(Project.java:219)
+	at org.eclipse.core.internal.resources.Project.assertCreateRequirements(Project.java:95)
+	at org.eclipse.core.internal.resources.Project.create(Project.java:316)
+	at org.eclipse.core.internal.resources.Project.create(Project.java:302)
+	at org.eclipse.ui.internal.wizards.datatransfer.SmartImportJob.createOrImportProject(SmartImportJob.java:594)
+	at org.eclipse.ui.internal.wizards.datatransfer.SmartImportJob.toExistingOrNewProject(SmartImportJob.java:542)
+	... 2 more
+!SESSION 2026-09-01 01:19:03.445 -----------------------------------------------
+eclipse.buildId=4.37.0.20250905-1455
+java.version=22
+java.vendor=Oracle Corporation
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=es_CO
+Framework arguments:  -product org.eclipse.epp.package.java.product
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 -product org.eclipse.epp.package.java.product
+
+!ENTRY ch.qos.logback.classic 1 0 2026-09-01 01:19:05.604
+!MESSAGE Activated before the state location was initialized. Retry after the state location is initialized.
+
+!ENTRY ch.qos.logback.classic 1 0 2026-09-01 01:19:12.488
+!MESSAGE Logback config file: D:\ARCHIVOS UNIVERSIDAD\COPIA PROYECTO JAVA INVENTARIO APP\InventarioApp\.metadata\.plugins\org.eclipse.m2e.logback\logback.2.7.100.20250418-1315.xml
+
+!ENTRY org.eclipse.egit.ui 2 0 2026-09-01 01:19:18.300
+!MESSAGE Warning: The environment variable HOME is not set. The following directory will be used to store the Git
+user global configuration and to define the default location to store repositories: 'C:\Users\black'. If this is
+not correct please set the HOME environment variable and restart Eclipse. Otherwise Git for Windows and
+EGit might behave differently since they see different configuration options.
+This warning can be switched off on the Team > Git > Confirmations and Warnings preference page.
+
+!ENTRY org.eclipse.oomph.ui 4 0 2026-09-01 01:19:23.268
+!MESSAGE java.lang.ExceptionInInitializerError
+!STACK 0
+java.lang.ExceptionInInitializerError
+	at org.eclipse.oomph.p2.internal.core.AgentImpl.initializeProvisioningAgent(AgentImpl.java:604)
+	at org.eclipse.oomph.p2.internal.core.AgentManagerImpl.getCurrentAgent(AgentManagerImpl.java:228)
+	at org.eclipse.oomph.p2.core.P2Util.getCurrentProvisioningAgent(P2Util.java:117)
+	at org.eclipse.oomph.setup.internal.core.util.SetupCoreUtil.<clinit>(SetupCoreUtil.java:158)
+	at org.eclipse.oomph.setup.ui.recorder.RecorderManager.<clinit>(RecorderManager.java:114)
+	at org.eclipse.oomph.setup.ui.SetupUIPlugin.performStartup(SetupUIPlugin.java:229)
+	at org.eclipse.oomph.setup.ui.EarlyStartup.earlyStartup(EarlyStartup.java:23)
+	at org.eclipse.oomph.internal.ui.EarlyStart.run(EarlyStart.java:119)
+	at org.eclipse.oomph.internal.ui.EarlyStart$1.run(EarlyStart.java:98)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:63)
+Caused by: java.lang.NullPointerException: Cannot invoke "org.osgi.framework.BundleContext.getProperty(String)" because the return value of "org.eclipse.equinox.internal.p2.artifact.repository.Activator.getContext()" is null
+	at org.eclipse.oomph.p2.internal.core.CachingRepositoryManager$Artifact.<clinit>(CachingRepositoryManager.java:570)
+	... 10 more
+!SESSION 2026-09-01 01:19:57.661 -----------------------------------------------
+eclipse.buildId=4.37.0.20250905-1455
+java.version=22
+java.vendor=Oracle Corporation
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=es_CO
+Framework arguments:  -product org.eclipse.epp.package.java.product
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 -product org.eclipse.epp.package.java.product
+
+!ENTRY ch.qos.logback.classic 1 0 2026-09-01 01:20:00.149
+!MESSAGE Activated before the state location was initialized. Retry after the state location is initialized.
+
+!ENTRY ch.qos.logback.classic 1 0 2026-09-01 01:20:10.840
+!MESSAGE Logback config file: D:\ARCHIVOS UNIVERSIDAD\COPIA PROYECTO JAVA INVENTARIO APP\InventarioApp\.metadata\.plugins\org.eclipse.m2e.logback\logback.2.7.100.20250418-1315.xml
+
+!ENTRY org.eclipse.egit.ui 2 0 2026-09-01 01:20:16.501
+!MESSAGE Warning: The environment variable HOME is not set. The following directory will be used to store the Git
+user global configuration and to define the default location to store repositories: 'C:\Users\black'. If this is
+not correct please set the HOME environment variable and restart Eclipse. Otherwise Git for Windows and
+EGit might behave differently since they see different configuration options.
+This warning can be switched off on the Team > Git > Confirmations and Warnings preference page.

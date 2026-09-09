@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "MainApp",
+            "request": "launch",
+            "mainClass": "InventarioApp.MainApp",
+            "projectName": "InventarioApp",
+            "vmArgs": "--module-path \"${workspaceFolder}/lib\" --add-modules javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.swing,javafx.web -Djava.library.path=\"${workspaceFolder}/lib/native\" -Dprism.order=sw"
+        }
+    ]
+}
