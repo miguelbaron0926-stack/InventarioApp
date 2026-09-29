@@ -9,6 +9,7 @@ out/
 # Archivos de compilación Java
 *.class
 *.jar
+!lib/*.jar
 
 # Archivos del sistema operativo
 Thumbs.db

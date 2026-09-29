@@ -3,10 +3,24 @@
     "configurations": [
         {
             "type": "java",
+            "name": "App",
+            "request": "launch",
+            "mainClass": "InventarioApp.App",
+            "projectName": "InventarioApp"
+        },
+        {
+            "type": "java",
+            "name": "InventarioApp",
+            "request": "launch",
+            "mainClass": "InventarioApp.InventarioApp",
+            "projectName": "InventarioApp"
+        },
+        {
+            "type": "java",
             "name": "MainApp",
             "request": "launch",
-            "mainClass": "InventarioApp.MainApp",
-            "projectName": "InventarioApp_f6bd09c"
+            "mainClass": "MainApp",
+            "projectName": "InventarioApp"
         },
         {
             "type": "java",
@@ -14,7 +28,7 @@
             "request": "launch",
             "mainClass": "InventarioApp.MainApp",
             "projectName": "InventarioApp",
-            "vmArgs": "--module-path \"D:/JAVA FX/openjfx-21.0.5_windows-x64_bin-sdk/javafx-sdk-21.0.5/lib\" --add-modules javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.swing,javafx.web"
+            "vmArgs": "--module-path \"${workspaceFolder}/lib\" --add-modules javafx.controls -Djava.library.path=\"${workspaceFolder}/lib/native\" -Dprism.order=sw"
         }
     ]
 }
