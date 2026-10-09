@@ -2,11 +2,15 @@ package InventarioApp;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.text.DecimalFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -30,6 +34,7 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.image.Image;
@@ -50,6 +55,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 public class MainApp extends Application {
@@ -59,7 +65,6 @@ public class MainApp extends Application {
     private static final int TOTAL_FONT_SIZE = 24;
 
     // ================= RUTAS DE IMÁGENES (CLASSPATH, PORTABLES) =================
-    // Todas las imágenes deben estar en: src/InventarioApp/images/
     private static final String IMG_DIR = "/InventarioApp/images/";
     private static final String LOGO = IMG_DIR + "logo.png";
     private static final String FONDO_LOGIN = IMG_DIR + "login_fondo.png";
@@ -70,13 +75,12 @@ public class MainApp extends Application {
     private Text totalPrefix, totalValue;
     private UsuarioService usuarioService = new UsuarioService();
     private InventarioService inventarioService = new InventarioService();
+    private VentasService ventasService = new VentasService();
     private List<Producto> carrito = new ArrayList<>();
 
     // ================= MODELOS =================
-
     public static class Usuario {
-        private String username, password, rol;
-        private String nombres, apellidos, cedula, email;
+        private String username, password, rol, nombres, apellidos, cedula, email;
 
         public Usuario(String username, String password, String rol) {
             this.username = username;
@@ -84,8 +88,8 @@ public class MainApp extends Application {
             this.rol = rol;
         }
 
-        public Usuario(String username, String password, String rol,
-                String nombres, String apellidos, String cedula, String email) {
+        public Usuario(String username, String password, String rol, String nombres, String apellidos, String cedula,
+                String email) {
             this(username, password, rol);
             this.nombres = nombres;
             this.apellidos = apellidos;
@@ -183,8 +187,34 @@ public class MainApp extends Application {
         }
     }
 
-    // ================= SERVICIOS =================
+    public static class Venta {
+        String idVenta, fecha, detalleProductos, total;
 
+        public Venta(String idVenta, String fecha, String detalleProductos, String total) {
+            this.idVenta = idVenta;
+            this.fecha = fecha;
+            this.detalleProductos = detalleProductos;
+            this.total = total;
+        }
+
+        public String getIdVenta() {
+            return idVenta;
+        }
+
+        public String getFecha() {
+            return fecha;
+        }
+
+        public String getDetalleProductos() {
+            return detalleProductos;
+        }
+
+        public String getTotal() {
+            return total;
+        }
+    }
+
+    // ================= SERVICIOS =================
     public static class UsuarioService {
         private List<Usuario> usuarios = new ArrayList<>();
         private static final String ARCHIVO = "usuarios.txt";
@@ -198,11 +228,10 @@ public class MainApp extends Application {
                 String linea;
                 while ((linea = br.readLine()) != null) {
                     String[] d = linea.split(",");
-                    if (d.length >= 7) {
+                    if (d.length >= 7)
                         usuarios.add(new Usuario(d[0], d[1], d[2], d[3], d[4], d[5], d[6]));
-                    } else if (d.length >= 3) {
+                    else if (d.length >= 3)
                         usuarios.add(new Usuario(d[0], d[1], d[2]));
-                    }
                 }
             } catch (IOException e) {
                 usuarios.add(new Usuario("admin", "admin", "admin", "Administrador", "Sistema", "0000000000",
@@ -249,6 +278,49 @@ public class MainApp extends Application {
         public List<Usuario> obtenerUsuarios() {
             return usuarios;
         }
+
+        public int importarCSV(File archivo) {
+            List<Usuario> temp = new ArrayList<>();
+            int count = 0;
+            try (BufferedReader br = new BufferedReader(new FileReader(archivo))) {
+                String linea;
+                while ((linea = br.readLine()) != null) {
+                    try {
+                        String[] d = linea.split(",");
+                        if (d.length >= 7) {
+                            temp.add(new Usuario(d[0].trim(), d[1].trim(), d[2].trim(), d[3].trim(), d[4].trim(),
+                                    d[5].trim(), d[6].trim()));
+                            count++;
+                        } else if (d.length >= 3) {
+                            temp.add(new Usuario(d[0].trim(), d[1].trim(), d[2].trim()));
+                            count++;
+                        }
+                    } catch (Exception e) {
+                        /* Ignorar fila */ }
+                }
+                usuarios.clear();
+                usuarios.addAll(temp);
+                guardar();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return count;
+        }
+
+        public void exportarCSV(File archivo) {
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(archivo))) {
+                for (Usuario u : usuarios) {
+                    bw.write(u.getUsername() + "," + u.getPassword() + "," + u.getRol() + ","
+                            + (u.getNombres() != null ? u.getNombres() : "") + ","
+                            + (u.getApellidos() != null ? u.getApellidos() : "") + ","
+                            + (u.getCedula() != null ? u.getCedula() : "") + ","
+                            + (u.getEmail() != null ? u.getEmail() : ""));
+                    bw.newLine();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public static class InventarioService {
@@ -267,13 +339,12 @@ public class MainApp extends Application {
                 while ((linea = br.readLine()) != null) {
                     String[] d = linea.split(",");
                     if (d.length == 5)
-                        inventario.add(new Producto(d[0], d[1], d[2],
-                                Integer.parseInt(d[3]), Double.parseDouble(d[4])));
+                        inventario
+                                .add(new Producto(d[0], d[1], d[2], Integer.parseInt(d[3]), Double.parseDouble(d[4])));
                 }
             } catch (IOException e) {
                 cargarPorDefecto();
             }
-
             try (BufferedReader br = new BufferedReader(new FileReader(ARCH_PROV))) {
                 String linea;
                 while ((linea = br.readLine()) != null) {
@@ -289,8 +360,8 @@ public class MainApp extends Application {
         private void guardarInventario() {
             try (BufferedWriter bw = new BufferedWriter(new FileWriter(ARCH_INV))) {
                 for (Producto p : inventario) {
-                    bw.write(p.getId() + "," + p.getNombre() + "," + p.getCategoria()
-                            + "," + p.getCantidad() + "," + p.getPrecio());
+                    bw.write(p.getId() + "," + p.getNombre() + "," + p.getCategoria() + "," + p.getCantidad() + ","
+                            + p.getPrecio());
                     bw.newLine();
                 }
             } catch (IOException e) {
@@ -312,45 +383,15 @@ public class MainApp extends Application {
         private void cargarPorDefecto() {
             inventario.add(new Producto("1", "Procesador Intel Core i5-13400", "Procesadores", 12, 1100000));
             inventario.add(new Producto("2", "Tarjeta Gráfica RTX 4060", "Tarjetas Gráficas", 15, 1600000));
-            inventario.add(new Producto("3", "Memoria RAM DDR5 16GB (3200MHz)", "Memorias RAM", 20, 320000));
+            inventario.add(new Producto("3", "Memoria RAM DDR5 16GB", "Memorias RAM", 20, 320000));
             inventario.add(new Producto("4", "SSD SATA 1TB", "Discos Duros", 25, 280000));
-            inventario.add(new Producto("5", "Placa Madre B660 Micro ATX", "Boards", 10, 750000));
-            inventario.add(new Producto("6", "Fuente de Poder 650W 80+ Bronze", "Fuentes de Poder", 18, 250000));
-            inventario.add(new Producto("7", "Gabinete Gamer con Ventiladores", "Gabinetes", 22, 350000));
-            inventario.add(new Producto("8", "Teclado Mecánico RGB", "Periféricos", 30, 220000));
-            inventario.add(new Producto("9", "Mouse Gaming Óptico", "Periféricos", 40, 120000));
-            inventario.add(new Producto("10", "Audífonos Gaming Inalámbricos", "Periféricos", 16, 380000));
-            inventario.add(new Producto("11", "Monitor LED 24\" 144Hz", "Monitores", 14, 850000));
-            inventario.add(new Producto("12", "Cooler Air CPU Dual Tower", "Refrigeración", 18, 180000));
-            inventario.add(new Producto("13", "Router Wi-Fi 6", "Redes", 18, 320000));
-            inventario.add(new Producto("14", "Switch Ethernet 8 Puertos", "Redes", 12, 180000));
-            inventario.add(new Producto("15", "Disipador Líquido RGB", "Refrigeración", 8, 350000));
-            inventario.add(new Producto("16", "Kit de Ventiladores ARGB", "Refrigeración", 20, 120000));
-            inventario.add(new Producto("17", "SSD NVMe 1TB", "Discos Duros", 22, 480000));
-            inventario.add(new Producto("18", "Memoria RAM DDR5 16GB", "Memorias RAM", 16, 320000));
-            inventario.add(new Producto("19", "Procesador AMD Ryzen 7", "Procesadores", 10, 1100000));
-            inventario.add(new Producto("20", "Placa Madre Micro ATX", "Boards", 14, 580000));
-            inventario.add(new Producto("21", "Fuente Modular 750W", "Fuentes de Poder", 10, 300000));
-            inventario.add(new Producto("22", "Tarjeta Gráfica RTX 3060", "Tarjetas Gráficas", 6, 1800000));
-            inventario.add(new Producto("23", "Monitor Curvo 27 pulgadas", "Monitores", 12, 950000));
-            inventario.add(new Producto("24", "Combo Teclado y Mouse Inalámbrico", "Periféricos", 25, 180000));
-            inventario.add(new Producto("25", "Hub USB 3.0", "Periféricos", 30, 60000));
-            inventario.add(new Producto("26", "Soporte para Monitor", "Accesorios", 15, 85000));
-            inventario.add(new Producto("27", "Cable HDMI 2.1", "Accesorios", 50, 40000));
-            inventario.add(new Producto("28", "Micrófono Condensador USB", "Periféricos", 18, 220000));
-            inventario.add(new Producto("29", "Silla Ergonómica Gamer", "Mobiliario", 10, 750000));
-            inventario.add(new Producto("30", "Alfombrilla RGB XL", "Accesorios", 40, 90000));
+            inventario.add(new Producto("5", "Teclado Mecánico RGB", "Periféricos", 30, 220000));
             guardarInventario();
         }
 
         private void cargarProveedoresDefecto() {
             proveedores.add(new Proveedor("NetZone", "contacto@netzone.com"));
             proveedores.add(new Proveedor("CoolTech", "ventas@cooltech.com"));
-            proveedores.add(new Proveedor("DigitalStore", "info@digitalstore.com"));
-            proveedores.add(new Proveedor("PCMaster", "soporte@pcmaster.com"));
-            proveedores.add(new Proveedor("ElectroBits", "ventas@electrobits.com"));
-            proveedores.add(new Proveedor("GigaParts", "giga@parts.com"));
-            proveedores.add(new Proveedor("CompuWorld", "ventas@compuworld.com"));
             guardarProveedores();
         }
 
@@ -401,29 +442,140 @@ public class MainApp extends Application {
 
         public List<Producto> filtrar(String texto, String categoria) {
             String txt = texto.toLowerCase().trim();
-            return inventario.stream()
-                    .filter(p -> ("Todas".equals(categoria) || p.getCategoria().equals(categoria))
-                            && (p.getId().toLowerCase().contains(txt)
-                                    || p.getNombre().toLowerCase().contains(txt)
-                                    || p.getCategoria().toLowerCase().contains(txt)))
+            return inventario.stream().filter(p -> ("Todas".equals(categoria) || p.getCategoria().equals(categoria))
+                    && (p.getId().toLowerCase().contains(txt) || p.getNombre().toLowerCase().contains(txt)
+                            || p.getCategoria().toLowerCase().contains(txt)))
                     .collect(Collectors.toList());
+        }
+
+        public int importarInventarioCSV(File archivo) {
+            List<Producto> temp = new ArrayList<>();
+            int count = 0;
+            try (BufferedReader br = new BufferedReader(new FileReader(archivo))) {
+                String linea;
+                while ((linea = br.readLine()) != null) {
+                    try {
+                        String[] d = linea.split(",");
+                        if (d.length == 5) {
+                            temp.add(new Producto(d[0].trim(), d[1].trim(), d[2].trim(), Integer.parseInt(d[3].trim()),
+                                    Double.parseDouble(d[4].trim())));
+                            count++;
+                        }
+                    } catch (Exception e) {
+                        /* Ignorar fila */ }
+                }
+                inventario.clear();
+                inventario.addAll(temp);
+                guardarInventario();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return count;
+        }
+
+        public void exportarInventarioCSV(File archivo) {
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(archivo))) {
+                for (Producto p : inventario) {
+                    bw.write(p.getId() + "," + p.getNombre() + "," + p.getCategoria() + "," + p.getCantidad() + ","
+                            + p.getPrecio());
+                    bw.newLine();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public int importarProveedoresCSV(File archivo) {
+            List<Proveedor> temp = new ArrayList<>();
+            int count = 0;
+            try (BufferedReader br = new BufferedReader(new FileReader(archivo))) {
+                String linea;
+                while ((linea = br.readLine()) != null) {
+                    try {
+                        String[] d = linea.split(",");
+                        if (d.length == 2) {
+                            temp.add(new Proveedor(d[0].trim(), d[1].trim()));
+                            count++;
+                        }
+                    } catch (Exception e) {
+                        /* Ignorar fila */ }
+                }
+                proveedores.clear();
+                proveedores.addAll(temp);
+                guardarProveedores();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return count;
+        }
+
+        public void exportarProveedoresCSV(File archivo) {
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(archivo))) {
+                for (Proveedor p : proveedores) {
+                    bw.write(p.getNombre() + "," + p.getContacto());
+                    bw.newLine();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    // ================= UTILIDADES VISUALES (PORTABLES) =================
+    public static class VentasService {
+        private List<Venta> ventas = new ArrayList<>();
+        private static final String ARCH_VENTAS = "ventas.txt";
 
-    /**
-     * Carga una imagen desde el classpath (dentro de src/InventarioApp/images/).
-     */
+        public VentasService() {
+            cargar();
+        }
+
+        private void cargar() {
+            try (BufferedReader br = new BufferedReader(new FileReader(ARCH_VENTAS))) {
+                String linea;
+                while ((linea = br.readLine()) != null) {
+                    String[] d = linea.split("\\|");
+                    if (d.length == 4)
+                        ventas.add(new Venta(d[0].trim(), d[1].trim(), d[2].trim(), d[3].trim()));
+                }
+            } catch (IOException e) {
+                /* Si no existe, se crea al guardar la primera venta */ }
+        }
+
+        private void guardar() {
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(ARCH_VENTAS))) {
+                for (Venta v : ventas) {
+                    bw.write(v.idVenta + " | " + v.fecha + " | " + v.detalleProductos + " | " + v.total);
+                    bw.newLine();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public void registrarVenta(List<Producto> carrito, double total) {
+            String idVenta = "VTA-" + new Random().nextInt(90000) + 10000;
+            String fecha = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+            StringBuilder detalle = new StringBuilder();
+            for (Producto p : carrito) {
+                detalle.append(p.getNombre()).append(" (x").append(p.getCantidad()).append(") ");
+            }
+            DecimalFormat df = new DecimalFormat("#,###");
+            ventas.add(new Venta(idVenta, fecha, detalle.toString(), df.format(total) + " COP"));
+            guardar();
+        }
+
+        public List<Venta> obtenerVentas() {
+            return ventas;
+        }
+    }
+
+    // ================= UTILIDADES VISUALES =================
     private Image cargarImagen(String rutaClasspath) {
         try (InputStream is = getClass().getResourceAsStream(rutaClasspath)) {
-            if (is == null) {
-                System.err.println("No se encontró la imagen: " + rutaClasspath);
+            if (is == null)
                 return null;
-            }
             return new Image(is);
         } catch (Exception e) {
-            e.printStackTrace();
             return null;
         }
     }
@@ -434,10 +586,6 @@ public class MainApp extends Application {
             stage.getIcons().add(icono);
     }
 
-    /**
-     * Aplica una imagen de fondo como Background a un Region (comportamiento
-     * original).
-     */
     private void aplicarFondo(Region root, String rutaClasspath) {
         Image img = cargarImagen(rutaClasspath);
         if (img == null) {
@@ -445,20 +593,14 @@ public class MainApp extends Application {
             return;
         }
         BackgroundSize size = new BackgroundSize(100, 100, true, true, false, true);
-        root.setBackground(new Background(new BackgroundImage(img,
-                BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT,
-                BackgroundPosition.CENTER, size)));
+        root.setBackground(new Background(new BackgroundImage(img, BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, size)));
     }
 
-    /**
-     * Envuelve el contenido en un StackPane con imagen de fondo que se ajusta al
-     * tamaño de la ventana.
-     */
     private StackPane crearFondo(Node contenido, String rutaClasspath) {
         Image img = cargarImagen(rutaClasspath);
         if (img == null)
             return new StackPane(contenido);
-
         ImageView fondo = new ImageView(img);
         fondo.setPreserveRatio(false);
         fondo.setManaged(false);
@@ -490,8 +632,7 @@ public class MainApp extends Application {
         return new DecimalFormat("#,###");
     }
 
-    // ================= INICIO =================
-
+    // ================= FLUJO DE LA APP =================
     @Override
     public void start(Stage primaryStage) {
         this.loginStage = primaryStage;
@@ -502,36 +643,28 @@ public class MainApp extends Application {
         Stage s = loginStage;
         s.setTitle("Stock-Sync - Inicio de Sesión");
         configurarIcono(s);
-
         VBox root = new VBox(10);
         root.setPadding(new Insets(25));
         root.setAlignment(Pos.CENTER);
         aplicarFondo(root, FONDO_LOGIN);
-
         Label titulo = new Label("Stock-Sync");
         titulo.setFont(Font.font("Arial", FontWeight.BOLD, 26));
         titulo.setTextFill(Color.web("#0F2C54"));
-
         TextField txtUser = new TextField();
         txtUser.setPromptText("Usuario");
+        txtUser.setMaxWidth(280);
         PasswordField txtPass = new PasswordField();
         txtPass.setPromptText("Contraseña");
-        txtUser.setMaxWidth(280);
         txtPass.setMaxWidth(280);
-
         Button btnLogin = new Button("Iniciar Sesión");
         btnLogin.setDefaultButton(true);
         btnLogin.setStyle("-fx-background-color:#0F2C54; -fx-text-fill:white; -fx-font-weight:bold; -fx-padding:8 20;");
-
         Button btnReg = new Button("Registrarse");
         btnReg.setStyle("-fx-background-color:#0F2C54; -fx-text-fill:white; -fx-font-weight:bold; -fx-padding:8 20;");
-
         Button btnCat = new Button("Ver Catálogo");
         btnCat.setStyle("-fx-background-color:#6c7172; -fx-text-fill:white; -fx-font-weight:bold; -fx-padding:8 20;");
-
         HBox botones = new HBox(10, btnLogin, btnReg);
         botones.setAlignment(Pos.CENTER);
-
         Label olvide = new Label("¿Olvidaste tu contraseña?");
         olvide.setTextFill(Color.web("#17a2b8"));
         olvide.setUnderline(true);
@@ -539,9 +672,9 @@ public class MainApp extends Application {
 
         btnLogin.setOnAction(e -> {
             Usuario u = usuarioService.validar(txtUser.getText(), txtPass.getText());
-            if (u == null) {
+            if (u == null)
                 mostrarAlerta(Alert.AlertType.ERROR, "Usuario/clave inválidos");
-            } else if ("admin".equals(u.getRol())) {
+            else if ("admin".equals(u.getRol())) {
                 s.hide();
                 mostrarAdmin();
                 mostrarAlerta(Alert.AlertType.INFORMATION, "Bienvenido Administrador");
@@ -560,7 +693,6 @@ public class MainApp extends Application {
             mostrarCatalogoPublico(s);
         });
         olvide.setOnMouseClicked(e -> mostrarRecuperar(s));
-
         root.getChildren().addAll(titulo, txtUser, txtPass, botones, btnCat, olvide);
         s.setScene(new Scene(crearFondo(root, FONDO_LOGIN), 380, 380));
         s.show();
@@ -570,14 +702,11 @@ public class MainApp extends Application {
         Stage s = new Stage();
         s.setTitle("Registro de Cliente");
         configurarIcono(s);
-
         VBox root = new VBox(8);
         root.setPadding(new Insets(20));
         aplicarFondo(root, FONDO_LOGIN);
-
         Label titulo = new Label("Registro de Nuevo Cliente");
         titulo.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-
         TextField txtN = new TextField();
         txtN.setPromptText("Nombres");
         TextField txtA = new TextField();
@@ -590,20 +719,13 @@ public class MainApp extends Application {
         txtU.setPromptText("Nombre de Usuario");
         PasswordField txtP = new PasswordField();
         txtP.setPromptText("Contraseña");
-
         Button btnReg = new Button("Registrarse como Cliente");
         btnReg.setDefaultButton(true);
         btnReg.setStyle("-fx-background-color:#28a745; -fx-text-fill:white; -fx-font-weight:bold;");
-
         Button btnCan = new Button("Cancelar");
-
         btnReg.setOnAction(e -> {
-            String n = txtN.getText().trim(), a = txtA.getText().trim(),
-                    c = txtC.getText().trim(), em = txtE.getText().trim(),
-                    u = txtU.getText().trim(), p = txtP.getText().trim();
-
-            String rol = "cliente";
-
+            String n = txtN.getText().trim(), a = txtA.getText().trim(), c = txtC.getText().trim(),
+                    em = txtE.getText().trim(), u = txtU.getText().trim(), p = txtP.getText().trim();
             if (n.isEmpty() || a.isEmpty() || c.isEmpty() || em.isEmpty() || u.isEmpty() || p.isEmpty()) {
                 mostrarAlerta(Alert.AlertType.ERROR, "Completa todos los campos");
                 return;
@@ -612,8 +734,7 @@ public class MainApp extends Application {
                 mostrarAlerta(Alert.AlertType.ERROR, "El nombre de usuario ya existe");
                 return;
             }
-
-            usuarioService.registrar(new Usuario(u, p, rol, n, a, c, em));
+            usuarioService.registrar(new Usuario(u, p, "cliente", n, a, c, em));
             mostrarAlerta(Alert.AlertType.INFORMATION, "Cliente registrado correctamente");
             s.close();
             loginStage.show();
@@ -622,7 +743,6 @@ public class MainApp extends Application {
             s.close();
             loginStage.show();
         });
-
         root.getChildren().addAll(titulo, txtN, txtA, txtC, txtE, txtU, txtP, btnReg, btnCan);
         s.setScene(new Scene(crearFondo(root, FONDO_GENERAL), 400, 450));
         s.show();
@@ -655,76 +775,74 @@ public class MainApp extends Application {
         Stage s = new Stage();
         s.setTitle("Catálogo Público");
         configurarIcono(s);
-
         VBox root = new VBox(10);
         root.setPadding(new Insets(15));
         aplicarFondo(root, FONDO_CLIENTE);
-
         Label t = new Label("Inventario Disponible");
         t.setFont(Font.font("Arial", FontWeight.BOLD, 20));
         t.setTextFill(Color.web("#FF4500"));
-
         ComboBox<String> cbCat = new ComboBox<>();
         cbCat.getItems().addAll(inventarioService.obtenerCategorias());
         cbCat.setValue("Todas");
         TextField txt = new TextField();
         txt.setPromptText("Buscar...");
         HBox filtros = new HBox(10, cbCat, txt);
-
         GridPane grid = new GridPane();
         grid.setHgap(15);
         grid.setVgap(6);
         String bold = "-fx-font-weight:bold;";
-        Label h1 = new Label("ID");
-        h1.setStyle(bold);
-        Label h2 = new Label("Nombre");
-        h2.setStyle(bold);
-        Label h3 = new Label("Categoría");
-        h3.setStyle(bold);
-        Label h4 = new Label("Stock");
-        h4.setStyle(bold);
-        Label h5 = new Label("Precio Unidad");
-        h5.setStyle(bold);
-        grid.add(h1, 0, 0);
-        grid.add(h2, 1, 0);
-        grid.add(h3, 2, 0);
-        grid.add(h4, 3, 0);
-        grid.add(h5, 4, 0);
-
+        grid.add(new Label("ID") {
+            {
+                setStyle(bold);
+            }
+        }, 0, 0);
+        grid.add(new Label("Nombre") {
+            {
+                setStyle(bold);
+            }
+        }, 1, 0);
+        grid.add(new Label("Categoría") {
+            {
+                setStyle(bold);
+            }
+        }, 2, 0);
+        grid.add(new Label("Stock") {
+            {
+                setStyle(bold);
+            }
+        }, 3, 0);
+        grid.add(new Label("Precio Unidad") {
+            {
+                setStyle(bold);
+            }
+        }, 4, 0);
         ScrollPane scroll = new ScrollPane(grid);
         scroll.setFitToWidth(true);
         scroll.setPrefHeight(300);
-
         Button btnBack = new Button("Regresar");
         btnBack.setStyle("-fx-background-color:#6c757d; -fx-text-fill:white;");
         btnBack.setOnAction(e -> {
             s.close();
             parent.show();
         });
-
         Runnable actualizar = () -> {
             grid.getChildren().removeIf(n -> GridPane.getRowIndex(n) != null && GridPane.getRowIndex(n) > 0);
             List<Producto> lista = inventarioService.filtrar(txt.getText(), cbCat.getValue());
             int r = 1;
             for (Producto p : lista) {
-                Label id = new Label(p.getId());
-                Label nom = new Label(p.getNombre());
-                Label cat = new Label(p.getCategoria());
+                grid.add(new Label(p.getId()), 0, r);
+                grid.add(new Label(p.getNombre()), 1, r);
+                grid.add(new Label(p.getCategoria()), 2, r);
                 Label stk = new Label(String.valueOf(p.getCantidad()));
                 GridPane.setHalignment(stk, HPos.CENTER);
-                Label pr = new Label(df().format(p.getPrecio()) + " COP");
-                grid.add(id, 0, r);
-                grid.add(nom, 1, r);
-                grid.add(cat, 2, r);
                 grid.add(stk, 3, r);
-                grid.add(pr, 4, r);
+                grid.add(new Label(df().format(p.getPrecio()) + " COP"), 4, r);
                 r++;
             }
         };
         cbCat.setOnAction(e -> actualizar.run());
         txt.textProperty().addListener((o, ov, nv) -> actualizar.run());
         actualizar.run();
-
         root.getChildren().addAll(t, filtros, scroll, btnBack);
         s.setScene(new Scene(crearFondo(root, FONDO_CLIENTE), 700, 500));
         s.show();
@@ -734,48 +852,54 @@ public class MainApp extends Application {
         Stage s = new Stage();
         s.setTitle("Stock-Sync - Catálogo de Productos");
         configurarIcono(s);
-
         VBox root = new VBox(10);
         root.setPadding(new Insets(15));
         aplicarFondo(root, FONDO_CLIENTE);
-
         Label t = new Label("Catálogo de Productos");
         t.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-
         ComboBox<String> cbCat = new ComboBox<>();
         cbCat.getItems().addAll(inventarioService.obtenerCategorias());
         cbCat.setValue("Todas");
         TextField txt = new TextField();
         txt.setPromptText("Buscar...");
         HBox filtros = new HBox(10, cbCat, txt);
-
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(6);
         String bold = "-fx-font-weight:bold;";
-        Label hId = new Label("ID");
-        hId.setStyle(bold);
-        Label hNom = new Label("Nombre");
-        hNom.setStyle(bold);
-        Label hCat = new Label("Categoría");
-        hCat.setStyle(bold);
-        Label hStk = new Label("Stock");
-        hStk.setStyle(bold);
-        Label hCant = new Label("Cantidad");
-        hCant.setStyle(bold);
-        Label hPr = new Label("Precio Unidad");
-        hPr.setStyle(bold);
-        grid.add(hId, 0, 0);
-        grid.add(hNom, 1, 0);
-        grid.add(hCat, 2, 0);
-        grid.add(hStk, 3, 0);
-        grid.add(hCant, 4, 0);
-        grid.add(hPr, 5, 0);
-
+        grid.add(new Label("ID") {
+            {
+                setStyle(bold);
+            }
+        }, 0, 0);
+        grid.add(new Label("Nombre") {
+            {
+                setStyle(bold);
+            }
+        }, 1, 0);
+        grid.add(new Label("Categoría") {
+            {
+                setStyle(bold);
+            }
+        }, 2, 0);
+        grid.add(new Label("Stock") {
+            {
+                setStyle(bold);
+            }
+        }, 3, 0);
+        grid.add(new Label("Cantidad") {
+            {
+                setStyle(bold);
+            }
+        }, 4, 0);
+        grid.add(new Label("Precio Unidad") {
+            {
+                setStyle(bold);
+            }
+        }, 5, 0);
         ScrollPane scroll = new ScrollPane(grid);
         scroll.setFitToWidth(true);
         scroll.setPrefHeight(300);
-
         totalPrefix = new Text("Total: $");
         totalPrefix.setFill(Color.web(TOTAL_COLOR));
         totalPrefix.setFont(Font.font("Arial", FontWeight.BOLD, TOTAL_FONT_SIZE));
@@ -783,12 +907,10 @@ public class MainApp extends Application {
         totalValue.setFill(Color.BLACK);
         totalValue.setFont(Font.font("Arial", FontWeight.BOLD, TOTAL_FONT_SIZE));
         TextFlow totalFlow = new TextFlow(totalPrefix, totalValue);
-
         Button btnPay = new Button("Pagar");
         btnPay.setStyle("-fx-background-color:#28a745; -fx-text-fill:white; -fx-font-weight:bold; -fx-padding:8 20;");
         Button btnLogout = new Button("Cerrar Sesión");
         btnLogout.setStyle("-fx-background-color:#dc3545; -fx-text-fill:white; -fx-font-weight:bold;");
-
         HBox bottom = new HBox(20, totalFlow, btnPay, btnLogout);
         bottom.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(totalFlow, javafx.scene.layout.Priority.ALWAYS);
@@ -799,17 +921,16 @@ public class MainApp extends Application {
             List<Producto> lista = inventarioService.filtrar(txt.getText(), cbCat.getValue());
             int r = 1;
             for (Producto p : lista) {
-                Label id = new Label(p.getId());
-                Label nom = new Label(p.getNombre());
-                Label cat = new Label(p.getCategoria());
+                grid.add(new Label(p.getId()), 0, r);
+                grid.add(new Label(p.getNombre()), 1, r);
+                grid.add(new Label(p.getCategoria()), 2, r);
                 Label stk = new Label(String.valueOf(p.getCantidad()));
                 GridPane.setHalignment(stk, HPos.CENTER);
-
+                grid.add(stk, 3, r);
                 TextField tf = new TextField();
                 tf.setPromptText("0");
                 tf.setPrefWidth(70);
                 tf.setPrefHeight(25);
-
                 tf.focusedProperty().addListener((obs, ov, nv) -> {
                     if (nv && "0".equals(tf.getText()))
                         tf.clear();
@@ -826,18 +947,11 @@ public class MainApp extends Application {
                     }
                     actualizarTotal();
                 });
-
-                Label pr = new Label(df().format(p.getPrecio()) + " COP");
-                grid.add(id, 0, r);
-                grid.add(nom, 1, r);
-                grid.add(cat, 2, r);
-                grid.add(stk, 3, r);
                 grid.add(tf, 4, r);
-                grid.add(pr, 5, r);
+                grid.add(new Label(df().format(p.getPrecio()) + " COP"), 5, r);
                 r++;
             }
         };
-
         cbCat.setOnAction(e -> render.run());
         txt.textProperty().addListener((o, ov, nv) -> render.run());
         render.run();
@@ -849,7 +963,6 @@ public class MainApp extends Application {
             s.close();
             loginStage.show();
         });
-
         root.getChildren().addAll(t, filtros, scroll, bottom);
         s.setScene(new Scene(crearFondo(root, FONDO_CLIENTE), 800, 600));
         s.show();
@@ -865,23 +978,18 @@ public class MainApp extends Application {
         Stage s = new Stage();
         s.setTitle("Método de Pago");
         configurarIcono(s);
-
         VBox root = new VBox(15);
         root.setPadding(new Insets(25));
         root.setAlignment(Pos.CENTER);
-
         Label t = new Label("Método de Pago");
         t.setFont(Font.font("Arial", FontWeight.BOLD, 20));
         t.setTextFill(Color.web("#0F2C54"));
-
         Button btnCard = new Button("💳 Tarjeta de Crédito/Débito");
         btnCard.setStyle("-fx-background-color:#343a40; -fx-text-fill:white; -fx-font-size:14px; -fx-padding:12 20;");
         Button btnEfecty = new Button("🏦 Consignación en Efecty");
         btnEfecty.setStyle("-fx-background-color:#28a745; -fx-text-fill:white; -fx-font-size:14px; -fx-padding:12 20;");
-
         btnCard.setMaxWidth(Double.MAX_VALUE);
         btnEfecty.setMaxWidth(Double.MAX_VALUE);
-
         btnCard.setOnAction(e -> {
             s.close();
             mostrarPagoTarjeta(clientStage);
@@ -891,7 +999,7 @@ public class MainApp extends Application {
                 mostrarAlerta(Alert.AlertType.WARNING, "El carrito está vacío");
                 return;
             }
-            if (!descontarInventario()) {
+            if (!procesarVenta()) {
                 mostrarAlerta(Alert.AlertType.ERROR, "No hay suficiente stock disponible");
                 return;
             }
@@ -911,7 +1019,6 @@ public class MainApp extends Application {
             clientStage.close();
             mostrarCliente();
         });
-
         root.getChildren().addAll(t, btnCard, btnEfecty);
         s.setScene(new Scene(root, 400, 250));
         s.show();
@@ -921,52 +1028,33 @@ public class MainApp extends Application {
         Stage s = new Stage();
         s.setTitle("Pago con Tarjeta");
         configurarIcono(s);
-
         VBox root = new VBox(10);
         root.setPadding(new Insets(20));
-
         Label t = new Label("Pago con Tarjeta");
         t.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-
         ComboBox<String> cbTipo = new ComboBox<>();
         cbTipo.getItems().addAll("Visa", "Mastercard", "American Express", "Discover", "Diners Club");
         cbTipo.setPromptText("Tipo de Tarjeta");
-
         TextField txtNum = new TextField();
         txtNum.setPromptText("Número de tarjeta");
-        txtNum.setTextFormatter(new TextFormatter<>(change -> {
-            if (change.getControlNewText().length() <= 19)
-                return change;
-            return null;
-        }));
-
+        txtNum.setTextFormatter(
+                new TextFormatter<>(change -> change.getControlNewText().length() <= 19 ? change : null));
         TextField txtTit = new TextField();
         txtTit.setPromptText("Nombre del titular");
-
         TextField txtExp = new TextField();
         txtExp.setPromptText("MM/AA");
-        txtExp.setTextFormatter(new TextFormatter<>(change -> {
-            if (change.getControlNewText().length() <= 5)
-                return change;
-            return null;
-        }));
-
+        txtExp.setTextFormatter(
+                new TextFormatter<>(change -> change.getControlNewText().length() <= 5 ? change : null));
         TextField txtCvv = new TextField();
         txtCvv.setPromptText("CVV");
-        txtCvv.setTextFormatter(new TextFormatter<>(change -> {
-            if (change.getControlNewText().length() <= 4)
-                return change;
-            return null;
-        }));
-
+        txtCvv.setTextFormatter(
+                new TextFormatter<>(change -> change.getControlNewText().length() <= 4 ? change : null));
         Button btn = new Button("Confirmar Pago");
         btn.setStyle("-fx-background-color:#28a745; -fx-text-fill:white; -fx-font-weight:bold; -fx-padding:10;");
         btn.setMaxWidth(Double.MAX_VALUE);
-
         btn.setOnAction(e -> {
-            if (cbTipo.getValue() == null || txtNum.getText().trim().isEmpty()
-                    || txtTit.getText().trim().isEmpty() || txtExp.getText().trim().isEmpty()
-                    || txtCvv.getText().trim().isEmpty()) {
+            if (cbTipo.getValue() == null || txtNum.getText().trim().isEmpty() || txtTit.getText().trim().isEmpty()
+                    || txtExp.getText().trim().isEmpty() || txtCvv.getText().trim().isEmpty()) {
                 mostrarAlerta(Alert.AlertType.WARNING, "Complete todos los campos");
                 return;
             }
@@ -974,7 +1062,7 @@ public class MainApp extends Application {
                 mostrarAlerta(Alert.AlertType.WARNING, "El carrito está vacío");
                 return;
             }
-            if (!descontarInventario()) {
+            if (!procesarVenta()) {
                 mostrarAlerta(Alert.AlertType.ERROR, "No hay suficiente stock disponible");
                 return;
             }
@@ -990,87 +1078,91 @@ public class MainApp extends Application {
             clientStage.close();
             mostrarCliente();
         });
-
         root.getChildren().addAll(t, cbTipo, txtNum, txtTit, txtExp, txtCvv, btn);
         s.setScene(new Scene(root, 380, 380));
         s.show();
     }
 
-    private boolean descontarInventario() {
+    private boolean procesarVenta() {
         for (Producto c : carrito) {
             for (Producto p : inventarioService.obtenerInventario()) {
                 if (p.getId().equals(c.getId()) && p.getCantidad() < c.getCantidad())
                     return false;
             }
         }
+        double totalVenta = 0;
         for (Producto c : carrito) {
             for (Producto p : inventarioService.obtenerInventario()) {
                 if (p.getId().equals(c.getId())) {
                     int nueva = p.getCantidad() - c.getCantidad();
                     inventarioService.actualizarProducto(
                             new Producto(p.getId(), p.getNombre(), p.getCategoria(), nueva, p.getPrecio()));
+                    totalVenta += c.getPrecio();
                     break;
                 }
             }
         }
+        ventasService.registrarVenta(carrito, totalVenta);
         return true;
     }
 
-    // ================= ADMIN =================
-
+    // ================= ADMIN CON REPORTES CSV Y CARGA MASIVA =================
     private void mostrarAdmin() {
         Stage s = new Stage();
         s.setTitle("Stock-Sync - Panel Administrador");
         configurarIcono(s);
-
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(10));
         aplicarFondo(root, FONDO_ADMIN);
-
         Label t = new Label("Panel Administrador");
         t.setFont(Font.font("Arial", FontWeight.BOLD, 20));
         t.setTextFill(Color.web("#0F2C54"));
         root.setTop(t);
-
         TabPane tabs = new TabPane();
+        String bold = "-fx-font-weight:bold;";
 
-        // TAB INVENTARIO
+        // TAB 1: INVENTARIO
         Tab tabInv = new Tab("Inventario");
         tabInv.setClosable(false);
         VBox invBox = new VBox(10);
         invBox.setPadding(new Insets(10));
-
         ComboBox<String> cbCatA = new ComboBox<>();
         cbCatA.getItems().addAll(inventarioService.obtenerCategorias());
         cbCatA.setValue("Todas");
         TextField txtA = new TextField();
         txtA.setPromptText("Buscar...");
         HBox filtA = new HBox(10, cbCatA, txtA);
-
         GridPane gridA = new GridPane();
         gridA.setHgap(10);
         gridA.setVgap(6);
-        String bold = "-fx-font-weight:bold;";
-        Label h1 = new Label("ID");
-        h1.setStyle(bold);
-        Label h2 = new Label("Nombre");
-        h2.setStyle(bold);
-        Label h3 = new Label("Categoría");
-        h3.setStyle(bold);
-        Label h4 = new Label("Stock");
-        h4.setStyle(bold);
-        Label h5 = new Label("Precio");
-        h5.setStyle(bold);
-        gridA.add(h1, 0, 0);
-        gridA.add(h2, 1, 0);
-        gridA.add(h3, 2, 0);
-        gridA.add(h4, 3, 0);
-        gridA.add(h5, 4, 0);
-
+        gridA.add(new Label("ID") {
+            {
+                setStyle(bold);
+            }
+        }, 0, 0);
+        gridA.add(new Label("Nombre") {
+            {
+                setStyle(bold);
+            }
+        }, 1, 0);
+        gridA.add(new Label("Categoría") {
+            {
+                setStyle(bold);
+            }
+        }, 2, 0);
+        gridA.add(new Label("Stock") {
+            {
+                setStyle(bold);
+            }
+        }, 3, 0);
+        gridA.add(new Label("Precio") {
+            {
+                setStyle(bold);
+            }
+        }, 4, 0);
         ScrollPane scrollA = new ScrollPane(gridA);
         scrollA.setFitToWidth(true);
         scrollA.setPrefHeight(300);
-
         Runnable updA = () -> {
             gridA.getChildren().removeIf(n -> GridPane.getRowIndex(n) != null && GridPane.getRowIndex(n) > 0);
             List<Producto> lista = inventarioService.filtrar(txtA.getText(), cbCatA.getValue());
@@ -1090,15 +1182,43 @@ public class MainApp extends Application {
         txtA.textProperty().addListener((o, ov, nv) -> updA.run());
         updA.run();
 
-        invBox.getChildren().addAll(new Label("Inventario"), filtA, scrollA);
+        Button btnImportInv = new Button("📂 Cargar Inventario CSV");
+        btnImportInv.setStyle("-fx-background-color:#17a2b8; -fx-text-fill:white; -fx-font-weight:bold;");
+        btnImportInv.setOnAction(e -> {
+            FileChooser fc = new FileChooser();
+            fc.setTitle("Cargar Inventario");
+            fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos CSV", "*.csv", "*.txt"));
+            File f = fc.showOpenDialog(s);
+            if (f != null) {
+                int c = inventarioService.importarInventarioCSV(f);
+                updA.run();
+                cbCatA.getItems().clear();
+                cbCatA.getItems().addAll(inventarioService.obtenerCategorias());
+                cbCatA.setValue("Todas");
+                mostrarAlerta(Alert.AlertType.INFORMATION, c + " productos cargados exitosamente.");
+            }
+        });
+        Button btnExportInv = new Button("💾 Exportar Inventario CSV");
+        btnExportInv.setStyle("-fx-background-color:#6c757d; -fx-text-fill:white; -fx-font-weight:bold;");
+        btnExportInv.setOnAction(e -> {
+            FileChooser fc = new FileChooser();
+            fc.setTitle("Guardar Inventario");
+            fc.setInitialFileName("inventario_backup.csv");
+            File f = fc.showSaveDialog(s);
+            if (f != null) {
+                inventarioService.exportarInventarioCSV(f);
+                mostrarAlerta(Alert.AlertType.INFORMATION, "Inventario exportado exitosamente.");
+            }
+        });
+        HBox csvBoxInv = new HBox(10, btnImportInv, btnExportInv);
+        invBox.getChildren().addAll(new Label("Inventario"), filtA, scrollA, csvBoxInv);
         tabInv.setContent(invBox);
 
-        // TAB AGREGAR
+        // TAB 2: AGREGAR
         Tab tabAdd = new Tab("Agregar");
         tabAdd.setClosable(false);
         VBox addBox = new VBox(10);
         addBox.setPadding(new Insets(10));
-
         TextField addId = new TextField();
         addId.setPromptText("ID");
         TextField addNom = new TextField();
@@ -1106,19 +1226,17 @@ public class MainApp extends Application {
         ComboBox<String> addCat = new ComboBox<>();
         addCat.setPromptText("Categoría");
         addCat.setEditable(true);
-        addCat.getItems().addAll(inventarioService.obtenerCategorias().stream()
-                .filter(c -> !"Todas".equals(c)).collect(Collectors.toList()));
+        addCat.getItems().addAll(inventarioService.obtenerCategorias().stream().filter(c -> !"Todas".equals(c))
+                .collect(Collectors.toList()));
         TextField addQty = new TextField();
         addQty.setPromptText("Cantidad");
         TextField addPr = new TextField();
         addPr.setPromptText("Precio");
         Button btnAdd = new Button("Agregar");
         btnAdd.setStyle("-fx-background-color:#28a745; -fx-text-fill:white; -fx-font-weight:bold;");
-
         btnAdd.setOnAction(e -> {
             try {
-                String id = addId.getText().trim(), nom = addNom.getText().trim(),
-                        cat = addCat.getValue();
+                String id = addId.getText().trim(), nom = addNom.getText().trim(), cat = addCat.getValue();
                 int qty = Integer.parseInt(addQty.getText().trim());
                 double pr = Double.parseDouble(addPr.getText().trim());
                 if (id.isEmpty() || nom.isEmpty() || cat == null || cat.isEmpty()) {
@@ -1144,89 +1262,70 @@ public class MainApp extends Application {
         addBox.getChildren().addAll(new Label("Agregar Producto"), addId, addNom, addCat, addQty, addPr, btnAdd);
         tabAdd.setContent(addBox);
 
-        // TAB ACTUALIZAR
+        // TAB 3: ACTUALIZAR
         Tab tabUpd = new Tab("Actualizar");
         tabUpd.setClosable(false);
         VBox updBox = new VBox(10);
         updBox.setPadding(new Insets(10));
-
         TextField updId = new TextField();
         updId.setPromptText("ID del Producto a Actualizar (Obligatorio)");
         TextField updNom = new TextField();
         updNom.setPromptText("Nuevo Nombre (Dejar en blanco para no cambiar)");
         ComboBox<String> updCat = new ComboBox<>();
-        updCat.setPromptText("Nueva Categoría (Dejar en blanco para no cambiar)");
+        updCat.setPromptText("Nueva Categoría");
         updCat.setEditable(true);
-        updCat.getItems().addAll(inventarioService.obtenerCategorias().stream()
-                .filter(c -> !"Todas".equals(c)).collect(Collectors.toList()));
+        updCat.getItems().addAll(inventarioService.obtenerCategorias().stream().filter(c -> !"Todas".equals(c))
+                .collect(Collectors.toList()));
         TextField updQty = new TextField();
-        updQty.setPromptText("Nueva Cantidad (Dejar en blanco para no cambiar)");
+        updQty.setPromptText("Nueva Cantidad");
         TextField updPr = new TextField();
-        updPr.setPromptText("Nuevo Precio (Dejar en blanco para no cambiar)");
-
+        updPr.setPromptText("Nuevo Precio");
         Button btnUpd = new Button("Actualizar Producto");
         btnUpd.setStyle("-fx-background-color:#007bff; -fx-text-fill:white; -fx-font-weight:bold;");
-
         btnUpd.setOnAction(e -> {
             String id = updId.getText().trim();
             if (id.isEmpty()) {
                 mostrarAlerta(Alert.AlertType.WARNING, "Debe ingresar el ID del producto que desea actualizar.");
                 return;
             }
-
-            Producto existente = inventarioService.obtenerInventario().stream()
-                    .filter(p -> p.getId().equals(id)).findFirst().orElse(null);
-
+            Producto existente = inventarioService.obtenerInventario().stream().filter(p -> p.getId().equals(id))
+                    .findFirst().orElse(null);
             if (existente == null) {
                 mostrarAlerta(Alert.AlertType.ERROR, "No se encontró ningún producto con el ID: " + id);
                 return;
             }
-
             try {
                 String nomFinal = updNom.getText().trim().isEmpty() ? existente.getNombre() : updNom.getText().trim();
-
                 String catFinal = existente.getCategoria();
-                if (updCat.getValue() != null && !updCat.getValue().trim().isEmpty()) {
+                if (updCat.getValue() != null && !updCat.getValue().trim().isEmpty())
                     catFinal = updCat.getValue().trim();
-                }
-
                 int qtyFinal = existente.getCantidad();
-                if (!updQty.getText().trim().isEmpty()) {
+                if (!updQty.getText().trim().isEmpty())
                     qtyFinal = Integer.parseInt(updQty.getText().trim());
-                }
-
                 double prFinal = existente.getPrecio();
-                if (!updPr.getText().trim().isEmpty()) {
+                if (!updPr.getText().trim().isEmpty())
                     prFinal = Double.parseDouble(updPr.getText().trim());
-                }
-
-                Producto productoActualizado = new Producto(id, nomFinal, catFinal, qtyFinal, prFinal);
-                inventarioService.actualizarProducto(productoActualizado);
-
+                inventarioService.actualizarProducto(new Producto(id, nomFinal, catFinal, qtyFinal, prFinal));
                 mostrarAlerta(Alert.AlertType.INFORMATION,
                         "Producto actualizado y guardado en inventario.txt correctamente.");
-
                 updId.clear();
                 updNom.clear();
                 updCat.setValue(null);
                 updQty.clear();
                 updPr.clear();
                 updA.run();
-
             } catch (NumberFormatException ex) {
                 mostrarAlerta(Alert.AlertType.ERROR, "La cantidad y el precio deben ser números válidos.");
             }
         });
-
         updBox.getChildren().addAll(new Label("Actualizar Producto"), updId, updNom, updCat, updQty, updPr, btnUpd);
         tabUpd.setContent(updBox);
 
-        // TAB ELIMINAR
+        // TAB 4: ELIMINAR
         Tab tabDel = new Tab("Eliminar");
         tabDel.setClosable(false);
         VBox delBox = new VBox(10);
         delBox.setPadding(new Insets(10));
-
         TextField delId = new TextField();
         delId.setPromptText("ID a eliminar");
         Button btnDel = new Button("Eliminar");
@@ -1245,20 +1344,120 @@ public class MainApp extends Application {
         delBox.getChildren().addAll(new Label("Eliminar Producto"), delId, btnDel);
         tabDel.setContent(delBox);
 
-        // ================= PESTAÑA USUARIOS =================
+        // ================= TAB 5: REPORTE DE EXISTENCIAS (CSV) =================
+        Tab tabRepExist = new Tab("📊 Reporte de Existencias");
+        tabRepExist.setClosable(false);
+        VBox boxRepExist = new VBox(10);
+        boxRepExist.setPadding(new Insets(15));
+        TextArea txtRepExist = new TextArea();
+        txtRepExist.setEditable(false);
+        txtRepExist.setStyle("-fx-font-family: 'Consolas', 'Monospaced'; -fx-font-size: 13px;");
+
+        Button btnGenExist = new Button("Generar Reporte");
+        btnGenExist.setStyle("-fx-background-color:#17a2b8; -fx-text-fill:white; -fx-font-weight:bold;");
+        btnGenExist.setOnAction(e -> {
+            StringBuilder sb = new StringBuilder();
+            sb.append("ID,NOMBRE,CATEGORIA,CANTIDAD,PRECIO,VALOR_TOTAL\n");
+            double valorTotalInventario = 0;
+            for (Producto p : inventarioService.obtenerInventario()) {
+                double valorProducto = p.getCantidad() * p.getPrecio();
+                sb.append(String.format("%s,%s,%s,%d,%.0f,%.0f\n",
+                        p.getId(), p.getNombre(), p.getCategoria(), p.getCantidad(), p.getPrecio(), valorProducto));
+                valorTotalInventario += valorProducto;
+            }
+            sb.append(String.format("\nTOTAL GENERAL,,,,%d productos,%.0f COP",
+                    inventarioService.obtenerInventario().size(), valorTotalInventario));
+            txtRepExist.setText(sb.toString());
+        });
+
+        Button btnExpExist = new Button("💾 Exportar a CSV");
+        btnExpExist.setStyle("-fx-background-color:#6c757d; -fx-text-fill:white; -fx-font-weight:bold;");
+        btnExpExist.setOnAction(e -> {
+            if (txtRepExist.getText().isEmpty()) {
+                mostrarAlerta(Alert.AlertType.WARNING, "Primero genera el reporte");
+                return;
+            }
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Guardar Reporte de Existencias");
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos CSV", "*.csv"));
+            fileChooser.setInitialFileName("reporte_existencias_"
+                    + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm")) + ".csv");
+            File archivo = fileChooser.showSaveDialog(s);
+            if (archivo != null) {
+                try (PrintWriter writer = new PrintWriter(archivo, "UTF-8")) {
+                    writer.print(txtRepExist.getText());
+                    mostrarAlerta(Alert.AlertType.INFORMATION,
+                            "Reporte exportado exitosamente a:\n" + archivo.getAbsolutePath());
+                } catch (Exception ex) {
+                    mostrarAlerta(Alert.AlertType.ERROR, "Error al exportar: " + ex.getMessage());
+                }
+            }
+        });
+        boxRepExist.getChildren().addAll(btnGenExist, txtRepExist, btnExpExist);
+        tabRepExist.setContent(boxRepExist);
+
+        // ================= TAB 6: REPORTE DE VENTAS (CSV) =================
+        Tab tabRepVentas = new Tab("💰 Reporte de Ventas");
+        tabRepVentas.setClosable(false);
+        VBox boxRepVentas = new VBox(10);
+        boxRepVentas.setPadding(new Insets(15));
+        TextArea txtRepVentas = new TextArea();
+        txtRepVentas.setEditable(false);
+        txtRepVentas.setStyle("-fx-font-family: 'Consolas', 'Monospaced'; -fx-font-size: 13px;");
+
+        Button btnGenVentas = new Button("Generar Reporte");
+        btnGenVentas.setStyle("-fx-background-color:#17a2b8; -fx-text-fill:white; -fx-font-weight:bold;");
+        btnGenVentas.setOnAction(e -> {
+            StringBuilder sb = new StringBuilder();
+            sb.append("ID_VENTA,FECHA,PRODUCTOS,TOTAL\n");
+            double totalGeneralVentas = 0;
+            for (Venta v : ventasService.obtenerVentas()) {
+                sb.append(String.format("%s,%s,\"%s\",%s\n", v.getIdVenta(), v.getFecha(), v.getDetalleProductos(),
+                        v.getTotal().replace(" COP", "").replace(",", "")));
+                String totalLimpio = v.getTotal().replace(" COP", "").replace(",", "");
+                totalGeneralVentas += Double.parseDouble(totalLimpio);
+            }
+            sb.append(String.format("\nTOTAL GENERAL,,,,%.0f COP", totalGeneralVentas));
+            txtRepVentas.setText(sb.toString());
+        });
+
+        Button btnExpVentas = new Button("💾 Exportar a CSV");
+        btnExpVentas.setStyle("-fx-background-color:#6c757d; -fx-text-fill:white; -fx-font-weight:bold;");
+        btnExpVentas.setOnAction(e -> {
+            if (txtRepVentas.getText().isEmpty()) {
+                mostrarAlerta(Alert.AlertType.WARNING, "Primero genera el reporte");
+                return;
+            }
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Guardar Reporte de Ventas");
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos CSV", "*.csv"));
+            fileChooser.setInitialFileName("reporte_ventas_"
+                    + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm")) + ".csv");
+            File archivo = fileChooser.showSaveDialog(s);
+            if (archivo != null) {
+                try (PrintWriter writer = new PrintWriter(archivo, "UTF-8")) {
+                    writer.print(txtRepVentas.getText());
+                    mostrarAlerta(Alert.AlertType.INFORMATION,
+                            "Reporte exportado exitosamente a:\n" + archivo.getAbsolutePath());
+                } catch (Exception ex) {
+                    mostrarAlerta(Alert.AlertType.ERROR, "Error al exportar: " + ex.getMessage());
+                }
+            }
+        });
+        boxRepVentas.getChildren().addAll(btnGenVentas, txtRepVentas, btnExpVentas);
+        tabRepVentas.setContent(boxRepVentas);
+
+        // TAB 7: USUARIOS
         Tab tabUsers = new Tab("Usuarios");
         tabUsers.setClosable(false);
         VBox usersBox = new VBox(15);
         usersBox.setPadding(new Insets(15));
-
         Label addTitle = new Label("Agregar Nuevo Usuario");
         addTitle.setFont(Font.font("Arial", FontWeight.BOLD, 16));
         addTitle.setTextFill(Color.web("#0F2C54"));
-
         GridPane addGrid = new GridPane();
         addGrid.setHgap(10);
         addGrid.setVgap(8);
-
         TextField addNombres = new TextField();
         addNombres.setPromptText("Nombres");
         TextField addApellidos = new TextField();
@@ -1274,7 +1473,6 @@ public class MainApp extends Application {
         ComboBox<String> addRol = new ComboBox<>();
         addRol.getItems().addAll("cliente", "admin");
         addRol.setValue("cliente");
-
         addGrid.add(new Label("Nombres:"), 0, 0);
         addGrid.add(addNombres, 1, 0);
         addGrid.add(new Label("Apellidos:"), 0, 1);
@@ -1289,83 +1487,71 @@ public class MainApp extends Application {
         addGrid.add(addPass, 1, 5);
         addGrid.add(new Label("Rol:"), 0, 6);
         addGrid.add(addRol, 1, 6);
-
         Label listTitle = new Label("Usuarios Registrados");
         listTitle.setFont(Font.font("Arial", FontWeight.BOLD, 16));
         listTitle.setTextFill(Color.web("#0F2C54"));
-
         GridPane gridUsers = new GridPane();
         gridUsers.setHgap(10);
         gridUsers.setVgap(6);
-
-        Label hu1 = new Label("Usuario");
-        hu1.setStyle(bold);
-        Label hu2 = new Label("Nombres");
-        hu2.setStyle(bold);
-        Label hu3 = new Label("Apellidos");
-        hu3.setStyle(bold);
-        Label hu4 = new Label("Cédula");
-        hu4.setStyle(bold);
-        Label hu5 = new Label("Email");
-        hu5.setStyle(bold);
-        Label hu6 = new Label("Rol");
-        hu6.setStyle(bold);
-
-        gridUsers.add(hu1, 0, 0);
-        gridUsers.add(hu2, 1, 0);
-        gridUsers.add(hu3, 2, 0);
-        gridUsers.add(hu4, 3, 0);
-        gridUsers.add(hu5, 4, 0);
-        gridUsers.add(hu6, 5, 0);
-
+        gridUsers.add(new Label("Usuario") {
+            {
+                setStyle(bold);
+            }
+        }, 0, 0);
+        gridUsers.add(new Label("Nombres") {
+            {
+                setStyle(bold);
+            }
+        }, 1, 0);
+        gridUsers.add(new Label("Apellidos") {
+            {
+                setStyle(bold);
+            }
+        }, 2, 0);
+        gridUsers.add(new Label("Cédula") {
+            {
+                setStyle(bold);
+            }
+        }, 3, 0);
+        gridUsers.add(new Label("Email") {
+            {
+                setStyle(bold);
+            }
+        }, 4, 0);
+        gridUsers.add(new Label("Rol") {
+            {
+                setStyle(bold);
+            }
+        }, 5, 0);
         ScrollPane scrollUsers = new ScrollPane(gridUsers);
         scrollUsers.setFitToWidth(true);
         scrollUsers.setPrefHeight(250);
-
         Runnable updUsers = () -> {
             gridUsers.getChildren().removeIf(n -> GridPane.getRowIndex(n) != null && GridPane.getRowIndex(n) > 0);
             List<Usuario> lista = usuarioService.obtenerUsuarios();
             int r = 1;
             for (Usuario u : lista) {
-                Label lblUser = new Label(u.getUsername());
-                Label lblNombres = new Label(u.getNombres() != null ? u.getNombres() : "-");
-                Label lblApellidos = new Label(u.getApellidos() != null ? u.getApellidos() : "-");
-                Label lblCedula = new Label(u.getCedula() != null ? u.getCedula() : "-");
-                Label lblEmail = new Label(u.getEmail() != null ? u.getEmail() : "-");
-
+                gridUsers.add(new Label(u.getUsername()), 0, r);
+                gridUsers.add(new Label(u.getNombres() != null ? u.getNombres() : "-"), 1, r);
+                gridUsers.add(new Label(u.getApellidos() != null ? u.getApellidos() : "-"), 2, r);
+                gridUsers.add(new Label(u.getCedula() != null ? u.getCedula() : "-"), 3, r);
+                gridUsers.add(new Label(u.getEmail() != null ? u.getEmail() : "-"), 4, r);
                 Label lblRol = new Label(u.getRol().toUpperCase());
-                if ("admin".equals(u.getRol())) {
-                    lblRol.setStyle("-fx-text-fill:#dc3545; -fx-font-weight:bold;");
-                } else {
-                    lblRol.setStyle("-fx-text-fill:#28a745; -fx-font-weight:bold;");
-                }
+                lblRol.setStyle("admin".equals(u.getRol()) ? "-fx-text-fill:#dc3545; -fx-font-weight:bold;"
+                        : "-fx-text-fill:#28a745; -fx-font-weight:bold;");
                 GridPane.setHalignment(lblRol, HPos.CENTER);
-
-                gridUsers.add(lblUser, 0, r);
-                gridUsers.add(lblNombres, 1, r);
-                gridUsers.add(lblApellidos, 2, r);
-                gridUsers.add(lblCedula, 3, r);
-                gridUsers.add(lblEmail, 4, r);
                 gridUsers.add(lblRol, 5, r);
                 r++;
             }
         };
-
         updUsers.run();
-
         Button btnAddUser = new Button("Registrar Usuario");
         btnAddUser
                 .setStyle("-fx-background-color:#007bff; -fx-text-fill:white; -fx-font-weight:bold; -fx-padding:8 15;");
-
         btnAddUser.setOnAction(e -> {
-            String n = addNombres.getText().trim();
-            String a = addApellidos.getText().trim();
-            String c = addCedula.getText().trim();
-            String em = addEmail.getText().trim();
-            String u = addUser.getText().trim();
-            String p = addPass.getText().trim();
-            String rol = addRol.getValue();
-
+            String n = addNombres.getText().trim(), a = addApellidos.getText().trim(), c = addCedula.getText().trim(),
+                    em = addEmail.getText().trim(), u = addUser.getText().trim(), p = addPass.getText().trim(),
+                    rol = addRol.getValue();
             if (n.isEmpty() || a.isEmpty() || c.isEmpty() || em.isEmpty() || u.isEmpty() || p.isEmpty()
                     || rol == null) {
                 mostrarAlerta(Alert.AlertType.WARNING, "Complete todos los campos");
@@ -1380,10 +1566,8 @@ public class MainApp extends Application {
                 mostrarAlerta(Alert.AlertType.ERROR, "El nombre de usuario ya existe");
                 return;
             }
-
             usuarioService.registrar(new Usuario(u, p, rol, n, a, c, em));
             mostrarAlerta(Alert.AlertType.INFORMATION, "Usuario registrado correctamente");
-
             addNombres.clear();
             addApellidos.clear();
             addCedula.clear();
@@ -1391,19 +1575,43 @@ public class MainApp extends Application {
             addUser.clear();
             addPass.clear();
             addRol.setValue("cliente");
-
             updUsers.run();
         });
 
-        usersBox.getChildren().addAll(addTitle, addGrid, btnAddUser, listTitle, scrollUsers);
+        Button btnImportUser = new Button("📂 Cargar Usuarios CSV");
+        btnImportUser.setStyle("-fx-background-color:#17a2b8; -fx-text-fill:white; -fx-font-weight:bold;");
+        btnImportUser.setOnAction(e -> {
+            FileChooser fc = new FileChooser();
+            fc.setTitle("Cargar Usuarios");
+            fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos CSV", "*.csv", "*.txt"));
+            File f = fc.showOpenDialog(s);
+            if (f != null) {
+                int c = usuarioService.importarCSV(f);
+                updUsers.run();
+                mostrarAlerta(Alert.AlertType.INFORMATION, c + " usuarios cargados exitosamente.");
+            }
+        });
+        Button btnExportUser = new Button("💾 Exportar Usuarios CSV");
+        btnExportUser.setStyle("-fx-background-color:#6c757d; -fx-text-fill:white; -fx-font-weight:bold;");
+        btnExportUser.setOnAction(e -> {
+            FileChooser fc = new FileChooser();
+            fc.setTitle("Guardar Usuarios");
+            fc.setInitialFileName("usuarios_backup.csv");
+            File f = fc.showSaveDialog(s);
+            if (f != null) {
+                usuarioService.exportarCSV(f);
+                mostrarAlerta(Alert.AlertType.INFORMATION, "Usuarios exportados exitosamente.");
+            }
+        });
+        HBox csvBoxUser = new HBox(10, btnImportUser, btnExportUser);
+        usersBox.getChildren().addAll(addTitle, addGrid, btnAddUser, csvBoxUser, listTitle, scrollUsers);
         tabUsers.setContent(usersBox);
 
-        // TAB PROVEEDORES
+        // TAB 8: PROVEEDORES
         Tab tabProv = new Tab("Proveedores");
         tabProv.setClosable(false);
         VBox provBox = new VBox(10);
         provBox.setPadding(new Insets(10));
-
         TextField provN = new TextField();
         provN.setPromptText("Nombre Proveedor");
         TextField provE = new TextField();
@@ -1412,7 +1620,6 @@ public class MainApp extends Application {
         btnProv.setStyle("-fx-background-color:#28a745; -fx-text-fill:white; -fx-font-weight:bold;");
         ListView<String> lstProv = new ListView<>();
         lstProv.setPrefHeight(200);
-
         Runnable updProv = () -> {
             lstProv.getItems().clear();
             for (Proveedor p : inventarioService.obtenerProveedores())
@@ -1431,10 +1638,37 @@ public class MainApp extends Application {
             updProv.run();
         });
         updProv.run();
-        provBox.getChildren().addAll(new Label("Proveedores"), provN, provE, btnProv, lstProv);
+
+        Button btnImportProv = new Button("📂 Cargar Proveedores CSV");
+        btnImportProv.setStyle("-fx-background-color:#17a2b8; -fx-text-fill:white; -fx-font-weight:bold;");
+        btnImportProv.setOnAction(e -> {
+            FileChooser fc = new FileChooser();
+            fc.setTitle("Cargar Proveedores");
+            fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos CSV", "*.csv", "*.txt"));
+            File f = fc.showOpenDialog(s);
+            if (f != null) {
+                int c = inventarioService.importarProveedoresCSV(f);
+                updProv.run();
+                mostrarAlerta(Alert.AlertType.INFORMATION, c + " proveedores cargados exitosamente.");
+            }
+        });
+        Button btnExportProv = new Button("💾 Exportar Proveedores CSV");
+        btnExportProv.setStyle("-fx-background-color:#6c757d; -fx-text-fill:white; -fx-font-weight:bold;");
+        btnExportProv.setOnAction(e -> {
+            FileChooser fc = new FileChooser();
+            fc.setTitle("Guardar Proveedores");
+            fc.setInitialFileName("proveedores_backup.csv");
+            File f = fc.showSaveDialog(s);
+            if (f != null) {
+                inventarioService.exportarProveedoresCSV(f);
+                mostrarAlerta(Alert.AlertType.INFORMATION, "Proveedores exportados exitosamente.");
+            }
+        });
+        HBox csvBoxProv = new HBox(10, btnImportProv, btnExportProv);
+        provBox.getChildren().addAll(new Label("Proveedores"), provN, provE, btnProv, lstProv, csvBoxProv);
         tabProv.setContent(provBox);
 
-        tabs.getTabs().addAll(tabInv, tabAdd, tabUpd, tabDel, tabUsers, tabProv);
+        tabs.getTabs().addAll(tabInv, tabAdd, tabUpd, tabDel, tabRepExist, tabRepVentas, tabUsers, tabProv);
         root.setCenter(tabs);
 
         Button btnLogout = new Button("Cerrar Sesión");
@@ -1447,8 +1681,7 @@ public class MainApp extends Application {
         bottom.setAlignment(Pos.CENTER_RIGHT);
         bottom.setPadding(new Insets(5, 0, 0, 0));
         root.setBottom(bottom);
-
-        s.setScene(new Scene(crearFondo(root, FONDO_ADMIN), 850, 700));
+        s.setScene(new Scene(crearFondo(root, FONDO_ADMIN), 900, 700));
         s.show();
     }
 
